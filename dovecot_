@@ -1,0 +1,51 @@
+#!/usr/bin/env ruby
+
+# Source: https://github.com/cmur2/munin-dovecot
+
+#
+# Example usage:
+#  Do
+#    ln -s /path/to/dovecot_ dovecot_<mode>
+#  where <mode> is one of connections.
+#
+# Example config:
+#  [dovecot_*]
+#
+
+require 'csv'
+require 'open-uri'
+
+script = File.basename($0)
+@mode = script.gsub('dovecot_', '')
+@cmd = ARGV[0]
+
+def echo_connections()
+	case @cmd
+	when 'config'
+		puts "graph_title Dovecot connections"
+		puts "graph_args --lower-limit 0"
+		puts "graph_vlabel connections"
+		puts "graph_category dovecot"
+		puts "graph_scale no"
+		puts "graph_info This graph shows the number of connections to Dovecot."
+		puts "nimap.label imap"
+		puts "nimap.info Number of imap connections currently open."
+		puts "nimap.type GAUGE"
+	else
+		output = `doveadm stats dump session connected`
+		csv_data = CSV.parse(output, {:col_sep => "\t"})
+		exit 1 if csv_data.empty?
+		puts "nimap.value #{csv_data.select { |x| x[3] == 'imap'}.size}"
+	end
+end
+
+# open stderr
+$stderr = IO.new(2, "w")
+
+case @mode
+when 'connections'
+	echo_connections()
+else
+	$stderr.puts "Unknown mode #{@mode} for dovecot_!"
+	exit 3
+end
