@@ -32,7 +32,7 @@ def echo_connections()
 		puts "nimap.info Number of imap connections currently open."
 		puts "nimap.type GAUGE"
 	else
-		output = `doveadm stats dump session connected`
+		output = `doveadm oldstats dump session connected`
 		csv_data = CSV.parse(output, {:col_sep => "\t"})
 		exit 1 if csv_data.empty?
 		puts "nimap.value #{csv_data.select { |x| x[3] == 'imap'}.size}"
